@@ -3,8 +3,9 @@
 
 #include <G4VHit.hh>
 #include <G4ThreeVector.hh>
-#include <G4THitsCollection.hh>
+
 #include <G4PrimaryParticle.hh>
+
 #include "SDHCALRPC.h"
 
 class G4Step ;
@@ -72,6 +73,6 @@ class SDHCALHit : public G4VHit
 		G4int trackStatus {} ;
 } ;
 
-typedef G4THitsCollection<SDHCALHit> SDHCALHitCollection ;
+
 
 #endif //SDHCALHit_h

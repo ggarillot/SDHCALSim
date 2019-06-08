@@ -25,9 +25,7 @@
 #include <G4RegionStore.hh>
 #include <G4Region.hh>
 
-#include "SDHCALRPCSensitiveDetector.h"
-
-std::set<SDHCALRPC*> SDHCALRPC::allTheRPC ;
+#include "SDHCALHit.h"
 
 SDHCALRPC* SDHCALRPC::buildStandardRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize)
 {
@@ -98,13 +96,17 @@ SDHCALRPC* SDHCALRPC::buildWithScintillatorRPC(G4int _id , G4int _nPadX , G4int 
 }
 
 SDHCALRPC::SDHCALRPC(G4int _id , const SDHCALRPCGeom& _geom)
+	: G4VSensitiveDetector("")
 {
+	std::cout << "construct RPC " << SensitiveDetectorName << std::endl ;
 	id = _id ;
 
+	std::stringstream sname ; sname << "RPC" << id ;
+	SensitiveDetectorName = sname.str() ;
+
 	G4LogicalVolumeStore* store = G4LogicalVolumeStore::GetInstance() ;
-	std::stringstream sname ; sname << "Cassette" << id ;
-	name = sname.str() ;
-	if ( store->GetVolume(name , false) )
+
+	if ( store->GetVolume(SensitiveDetectorName , false) )
 	{
 		G4cerr << "WARNING : RPC with ID = " << id << " already existing" << G4endl ;
 		std::terminate() ;
@@ -112,12 +114,7 @@ SDHCALRPC::SDHCALRPC(G4int _id , const SDHCALRPCGeom& _geom)
 
 	build(_geom) ;
 
-	allTheRPC.insert(this) ;
-}
-SDHCALRPC::~SDHCALRPC()
-{
-	std::set<SDHCALRPC*>::iterator it = allTheRPC.find(this) ;
-	allTheRPC.erase(it) ;
+	collectionName.insert( SensitiveDetectorName ) ;
 }
 
 void SDHCALRPC::build(const SDHCALRPCGeom& _geom)
@@ -145,8 +142,8 @@ void SDHCALRPC::build(const SDHCALRPCGeom& _geom)
 	sizeZ = cassetteThickness ;
 
 	//create logic RPC volume (indefined placement)
-	G4Box* solidCassette = new G4Box(name , sizeX/2, sizeY/2, cassetteThickness/2) ;
-	G4LogicalVolume* logicCassette = new G4LogicalVolume(solidCassette ,  defaultMaterial , name ) ;
+	G4Box* solidCassette = new G4Box(SensitiveDetectorName , sizeX/2, sizeY/2, cassetteThickness/2) ;
+	G4LogicalVolume* logicCassette = new G4LogicalVolume(solidCassette ,  defaultMaterial , SensitiveDetectorName ) ;
 
 	G4LogicalVolume* logicGap = nullptr ;
 
@@ -191,17 +188,17 @@ void SDHCALRPC::build(const SDHCALRPCGeom& _geom)
 		std::terminate() ;
 	}
 
-	std::stringstream sensName ; sensName << "RPC" << id ;
-	sensitiveDetector = new SDHCALRPCSensitiveDetector(sensName.str() , this) ;
-	G4SDManager::GetSDMpointer()->AddNewDetector(sensitiveDetector) ;
-	logicGap->SetSensitiveDetector(sensitiveDetector) ;
+	// std::stringstream sensName ; sensName << "RPC" << id ;
+	// sensitiveDetector = new SDHCALRPCSensitiveDetector(sensName.str() , this) ;
+	G4SDManager::GetSDMpointer()->AddNewDetector(this) ;
+	logicGap->SetSensitiveDetector(this) ;
 
 	logicRPC = logicCassette ;
 }
 
 G4VPhysicalVolume* SDHCALRPC::createPhysicalVolume(G4RotationMatrix* rot , G4ThreeVector trans , G4LogicalVolume* motherLogic)
 {
-	physicRPC = new G4PVPlacement(rot , trans , logicRPC , name , motherLogic , false , 0 , true) ;
+	physicRPC = new G4PVPlacement(rot , trans , logicRPC , SensitiveDetectorName , motherLogic , false , 0 , true) ;
 	return physicRPC ;
 }
 
@@ -241,4 +238,67 @@ G4ThreeVector SDHCALRPC::getGlobalCoord(G4int I , G4int J) const
 {
 	G4ThreeVector localCoord( -0.5*sizeX + (I+0.5)*cellSize , -0.5*sizeY + (J+0.5)*cellSize , 0) ;
 	return rpcToGlobalTransform.TransformPoint(localCoord) ;
+}
+
+
+void SDHCALRPC::Initialize(G4HCofThisEvent* HCE)
+{
+	currentHit = nullptr ;
+
+	hitsCollection = new SDHCALHitCollection(SensitiveDetectorName , collectionName.at(0) ) ;
+	HCE->AddHitsCollection(id , hitsCollection) ;
+}
+
+G4bool SDHCALRPC::ProcessHits(G4Step* step , G4TouchableHistory*)
+{
+	if ( !Interested(step) )
+		return true ;
+
+	if (currentHit)
+	{
+		if ( currentHit->getTrackID() == step->GetTrack()->GetTrackID() &&
+			 currentHit->getEndPos() == step->GetPreStepPoint()->GetPosition() )
+		{
+			currentHit->updateWith(step) ;
+		}
+		else
+		{
+			currentHit->finalize() ;
+			hitsCollection->insert(currentHit) ;
+			currentHit = new SDHCALHit(step , this) ;
+		}
+	}
+	else
+	{
+		currentHit = new SDHCALHit(step , this) ;
+	}
+
+	if ( currentHit->isLeaving() )
+	{
+		currentHit->finalize() ;
+		hitsCollection->insert(currentHit) ;
+		currentHit = nullptr ;
+	}
+
+	return true ;
+}
+
+G4bool SDHCALRPC::Interested(const G4Step* step) const
+{
+	return static_cast<G4bool>( step->GetTrack()->GetDynamicParticle()->GetCharge() ) ;
+}
+
+void SDHCALRPC::finalizeLastHit()
+{
+	if (!currentHit)
+		return ;
+
+	currentHit->finalize() ;
+	hitsCollection->insert(currentHit) ;
+	currentHit = nullptr ;
+}
+
+void SDHCALRPC::EndOfEvent(G4HCofThisEvent*)
+{
+	finalizeLastHit() ;
 }

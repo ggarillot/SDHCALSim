@@ -7,11 +7,12 @@
 #include <G4VPhysicalVolume.hh>
 #include <G4AffineTransform.hh>
 
-#include <G4TouchableHistory.hh>
-#include <G4GRSVolume.hh>
+#include <G4VSensitiveDetector.hh>
+#include <G4THitsCollection.hh>
 
 #include <vector>
 #include <set>
+
 class G4LogicalVolume ;
 class SDHCALRPCSensitiveDetector ;
 
@@ -31,7 +32,10 @@ struct SDHCALRPCGeom
 	std::vector<Layer> layers {} ;
 } ;
 
-class SDHCALRPC
+class SDHCALHit ;
+typedef G4THitsCollection<SDHCALHit> SDHCALHitCollection ;
+
+class SDHCALRPC : public G4VSensitiveDetector
 {
 	public : 
 		static SDHCALRPC* buildStandardRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize) ;
@@ -40,7 +44,7 @@ class SDHCALRPC
 
 	public :
 		SDHCALRPC(G4int _id , const SDHCALRPCGeom& _geom) ;
-		virtual ~SDHCALRPC() ;
+		virtual ~SDHCALRPC() = default ;
 
 		G4LogicalVolume* getLogicRPC() { return logicRPC ; }
 		G4VPhysicalVolume* getPhysicRPC() { return physicRPC ; }
@@ -71,12 +75,22 @@ class SDHCALRPC
 		SDHCALRPC(const SDHCALRPC&) = delete ;
 		void operator=(const SDHCALRPC&) = delete ;
 
+
+		virtual void Initialize(G4HCofThisEvent*) ;
+		virtual G4bool ProcessHits(G4Step* step , G4TouchableHistory*) ;
+
+		virtual void EndOfEvent(G4HCofThisEvent*) ;
+
+		virtual G4bool Interested(const G4Step* step) const ;
+
+		void finalizeLastHit() ;
+
+
 	protected :
-		static std::set<SDHCALRPC*> allTheRPC ;
 
 		virtual void build(const SDHCALRPCGeom& _geom) ;
 
-		G4String name {} ;
+		// G4String name {} ;
 
 		G4int id {} ;
 		G4int nPadX {} ;
@@ -92,10 +106,15 @@ class SDHCALRPC
 
 		G4LogicalVolume* logicRPC {} ;
 		G4VPhysicalVolume* physicRPC {} ;
-		SDHCALRPCSensitiveDetector* sensitiveDetector {} ;
+		// SDHCALRPCSensitiveDetector* sensitiveDetector {} ;
 
 		G4VPhysicalVolume* physiGasGap {} ;
 
+		SDHCALHitCollection* hitsCollection {} ;
+
+		SDHCALHit* currentHit {} ;
 } ;
+
+
 
 #endif //SDHCALRPC_h

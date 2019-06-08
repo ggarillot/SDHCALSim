@@ -1,6 +1,7 @@
 #include "SDHCALEventAction.h"
 
 #include "SDHCALRun.h"
+#include "SDHCALRPC.h"
 
 #include <G4RunManager.hh>
 

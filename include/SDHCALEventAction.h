@@ -9,7 +9,6 @@
 #include "SDHCALTrackingAction.h"
 #include "SDHCALStackingAction.h"
 #include "SDHCALPrimaryGeneratorAction.h"
-#include "SDHCALRPCSensitiveDetector.h"
 #include "SDHCALRootWriter.h"
 
 #include <ctime>

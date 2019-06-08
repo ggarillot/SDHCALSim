@@ -21,7 +21,8 @@
 
 #include <string>
 
-#include <SDHCALHit.h>
+#include "SDHCALHit.h"
+
 
 
 class G4Event ;
