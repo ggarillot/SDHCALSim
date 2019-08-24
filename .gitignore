@@ -9,6 +9,6 @@ src/*.~
 include/*.~
 CMakeLists.txt.user
 .vscode/
-
+*.txt
 doc/Doxyfile
 doc/html/*

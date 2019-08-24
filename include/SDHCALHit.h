@@ -39,7 +39,6 @@ class SDHCALHit : public G4VHit
 		inline G4double getCharge() const { return charge ; }
 		inline const G4ThreeVector& getCoordInPad() const { return coordInPad ; }
 		inline G4int getTrackStatus() const { return trackStatus ; }
-//		inline G4PrimaryParticle* getPrimaryParticle() const { return primaryParticle ; }
 		inline G4int getPrimaryID() const { return primaryID ; }
 
 		virtual void Print() ;
@@ -67,7 +66,6 @@ class SDHCALHit : public G4VHit
 		G4double charge {} ;
 		G4ThreeVector coordInPad {} ;
 
-//		G4PrimaryParticle* primaryParticle ;
 		G4int primaryID {} ;
 
 		G4int trackStatus {} ;

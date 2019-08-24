@@ -11,6 +11,7 @@
 #include <G4THitsCollection.hh>
 
 #include <vector>
+#include <array>
 #include <set>
 
 class G4LogicalVolume ;
@@ -18,18 +19,18 @@ class SDHCALRPCSensitiveDetector ;
 
 struct SDHCALRPCGeom
 {
-	G4int nPadX {} ;
-	G4int nPadY {} ;
-	G4double cellSize {} ;
-	
-	struct Layer
-	{
-		G4String name ;
-		G4double width ; //in mm
-		G4String material ;
-	} ;
+		G4int nPadX {} ;
+		G4int nPadY {} ;
+		G4double cellSize {} ;
 
-	std::vector<Layer> layers {} ;
+		struct Layer
+		{
+				G4String name ;
+				G4double width ; //in mm
+				G4String material ;
+		} ;
+
+		std::vector<Layer> layers {} ; //This vector needs one and only one layer called 'GasGap' witch corresponds to the gas gap
 } ;
 
 class SDHCALHit ;
@@ -37,7 +38,8 @@ typedef G4THitsCollection<SDHCALHit> SDHCALHitCollection ;
 
 class SDHCALRPC : public G4VSensitiveDetector
 {
-	public : 
+	public :
+		// Helper functions to construct pre-defined RPCs
 		static SDHCALRPC* buildStandardRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize) ;
 		static SDHCALRPC* buildOldStandardRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize) ;
 		static SDHCALRPC* buildWithScintillatorRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize) ;
@@ -57,18 +59,19 @@ class SDHCALRPC : public G4VSensitiveDetector
 		inline G4double getSizeZ() const { return sizeZ ; }
 		inline G4int getID() const { return id ; }
 
+
 		inline G4bool isTransformComputed() const { return transformComputed ; }
 		void setCoordTransform(G4AffineTransform trans) ;
 		inline const G4AffineTransform& getGlobalToRpcTransform() const { return globalToRpcTransform ; }
-
 
 		const G4ThreeVector globalToRpcCoordTransform(G4ThreeVector globalCoord) const ;
 		const G4ThreeVector rpcToGlobalCoordTransform(G4ThreeVector localCoord) const ;
 
 		const G4ThreeVector IJToLocalCoord(G4int I , G4int J) const ;
-		std::vector<int> localCoordToIJ(G4ThreeVector localCoord) const ;
+		std::array<int,2> localCoordToIJ(G4ThreeVector localCoord) const ;
 
 		G4ThreeVector getGlobalCoord(G4int I , G4int J) const ;
+
 
 		G4VPhysicalVolume* createPhysicalVolume(G4RotationMatrix* rot , G4ThreeVector trans , G4LogicalVolume* motherLogic) ;
 
@@ -90,8 +93,6 @@ class SDHCALRPC : public G4VSensitiveDetector
 
 		virtual void build(const SDHCALRPCGeom& _geom) ;
 
-		// G4String name {} ;
-
 		G4int id {} ;
 		G4int nPadX {} ;
 		G4int nPadY {} ;
@@ -106,7 +107,6 @@ class SDHCALRPC : public G4VSensitiveDetector
 
 		G4LogicalVolume* logicRPC {} ;
 		G4VPhysicalVolume* physicRPC {} ;
-		// SDHCALRPCSensitiveDetector* sensitiveDetector {} ;
 
 		G4VPhysicalVolume* physiGasGap {} ;
 
