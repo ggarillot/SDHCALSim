@@ -3,9 +3,8 @@
 
 #include <G4VHit.hh>
 #include <G4ThreeVector.hh>
-
+#include <G4THitsCollection.hh>
 #include <G4PrimaryParticle.hh>
-
 #include "SDHCALRPC.h"
 
 class G4Step ;
@@ -14,10 +13,12 @@ class SDHCALHit : public G4VHit
 {
 	public :
 		SDHCALHit(const G4Step* step, SDHCALRPC* _rpc) ;
+		virtual ~SDHCALHit() { ; }
 
 		void updateWith(const G4Step* step) ;
 		void finalize() ;
 		virtual void computePosition() ;
+
 
 		inline const G4ThreeVector getPos() const { return 0.5*(endPos + beginPos) ; }
 		inline const G4ThreeVector& getBeginPos() const { return beginPos ; }
@@ -39,38 +40,38 @@ class SDHCALHit : public G4VHit
 		inline G4double getCharge() const { return charge ; }
 		inline const G4ThreeVector& getCoordInPad() const { return coordInPad ; }
 		inline G4int getTrackStatus() const { return trackStatus ; }
+//		inline G4PrimaryParticle* getPrimaryParticle() const { return primaryParticle ; }
 		inline G4int getPrimaryID() const { return primaryID ; }
 
 		virtual void Print() ;
 
-		SDHCALHit() = delete ;
-		SDHCALHit(const SDHCALHit&) = delete ;
-		void operator=(const SDHCALHit&) = delete ;
 
 	protected :
-		G4ThreeVector beginPos {} ;
-		G4ThreeVector endPos {} ;
-		G4ThreeVector deltaPos {} ;
-		G4int trackID {} ;
-		G4int pdgID {} ;
-		G4double energyDeposited {} ;
-		G4double betaGamma {} ;
-		SDHCALRPC* rpc {} ;
-		G4int RPCID {} ;
-		G4int I {} ;
-		G4int J {} ;
-		G4bool isEnteringStep {} ;
-		G4bool isLeavingStep {} ;
-		G4double time {} ;
-		G4double trueLength {} ;
-		G4double charge {} ;
-		G4ThreeVector coordInPad {} ;
+		SDHCALHit() ;
+		G4ThreeVector beginPos ;
+		G4ThreeVector endPos ;
+		G4ThreeVector deltaPos ;
+		G4int trackID ;
+		G4int pdgID ;
+		G4double energyDeposited ;
+		G4double betaGamma ;
+		SDHCALRPC* rpc ;
+		G4int RPCID ;
+		G4int I ;
+		G4int J ;
+		G4bool isEnteringStep ;
+		G4bool isLeavingStep ;
+		G4double time ;
+		G4double trueLength ;
+		G4double charge ;
+		G4ThreeVector coordInPad ;
 
-		G4int primaryID {} ;
+//		G4PrimaryParticle* primaryParticle ;
+		G4int primaryID = 0 ;
 
-		G4int trackStatus {} ;
+		G4int trackStatus ;
 } ;
 
-
+typedef G4THitsCollection<SDHCALHit> SDHCALHitCollection ;
 
 #endif //SDHCALHit_h

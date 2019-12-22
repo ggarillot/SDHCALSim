@@ -5,13 +5,13 @@
 
 #include <stdexcept>
 
-SDHCALTrackingAction* SDHCALTrackingAction::instance = nullptr ;
+SDHCALTrackingAction* SDHCALTrackingAction::instance = 0 ;
 
 SDHCALTrackingAction::SDHCALTrackingAction()
 	: G4UserTrackingAction()
 {
 	if (instance)
-		throw std::logic_error("SDHCALTrackingAction already exists") ;
+		throw std::logic_error("LyonSteppingAction already exists") ;
 
 	instance = this ;
 

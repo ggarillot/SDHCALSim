@@ -1,7 +1,5 @@
 #include "SDHCALLcioWriter.h"
 
-#include "SDHCALRPC.h"
-
 SDHCALLcioWriter::SDHCALLcioWriter(std::string fileName)
 {
 	writer = lcio::LCFactory::getInstance()->createLCWriter() ;

@@ -21,8 +21,7 @@
 
 #include <string>
 
-#include "SDHCALHit.h"
-
+#include <SDHCALHit.h>
 
 
 class G4Event ;
@@ -49,19 +48,17 @@ class SDHCALLcioWriter
 
 		void clear() ;
 
-		SDHCALLcioWriter(const SDHCALLcioWriter&) = delete ;
-		void operator=(const SDHCALLcioWriter&) = delete ;
 
 	protected :
-		lcio::LCWriter* writer {} ;
+		lcio::LCWriter* writer = nullptr ;
 
-		IMPL::LCEventImpl* lcEvent {} ;
-		IMPL::LCCollectionVec* particleCol {} ;
-		IMPL::LCCollectionVec* simVec {} ;
+		IMPL::LCEventImpl* lcEvent = nullptr ;
+		IMPL::LCCollectionVec* particleCol = nullptr ;
+		IMPL::LCCollectionVec* simVec = nullptr ;
 
-		std::map<G4int,IMPL::MCParticleImpl*> primaryParticleMap {} ;
+		std::map<G4int,IMPL::MCParticleImpl*> primaryParticleMap = {} ;
 
-		std::string detectorName {} ;
+		std::string detectorName ;
 } ;
 
 #endif //SDHCALLcioWriter_h

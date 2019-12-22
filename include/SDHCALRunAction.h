@@ -28,9 +28,6 @@ class SDHCALRunAction : public G4UserRunAction
 		inline void setLcioFileName(G4String name) { lcioFileName = name ; }
 		inline void setRootFileName(G4String name) { rootFileName = name ; }
 
-		SDHCALRunAction(const SDHCALRunAction&) = delete ;
-		void operator=(const SDHCALRunAction&) = delete ;
-
 	protected :
 		SDHCALLcioWriter* writer = nullptr ;
 

@@ -7,46 +7,19 @@
 #include <G4VPhysicalVolume.hh>
 #include <G4AffineTransform.hh>
 
-#include <G4VSensitiveDetector.hh>
-#include <G4THitsCollection.hh>
+#include <G4TouchableHistory.hh>
+#include <G4GRSVolume.hh>
 
 #include <vector>
-#include <array>
 #include <set>
-
 class G4LogicalVolume ;
 class SDHCALRPCSensitiveDetector ;
 
-struct SDHCALRPCGeom
-{
-		G4int nPadX {} ;
-		G4int nPadY {} ;
-		G4double cellSize {} ;
-
-		struct Layer
-		{
-				G4String name ;
-				G4double width ; //in mm
-				G4String material ;
-		} ;
-
-		std::vector<Layer> layers {} ; //This vector needs one and only one layer called 'GasGap' witch corresponds to the gas gap
-} ;
-
-class SDHCALHit ;
-typedef G4THitsCollection<SDHCALHit> SDHCALHitCollection ;
-
-class SDHCALRPC : public G4VSensitiveDetector
+class SDHCALRPC
 {
 	public :
-		// Helper functions to construct pre-defined RPCs
-		static SDHCALRPC* buildStandardRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize) ;
-		static SDHCALRPC* buildOldStandardRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize) ;
-		static SDHCALRPC* buildWithScintillatorRPC(G4int _id , G4int _nPadX , G4int _nPadY , G4double _cellSize) ;
-
-	public :
-		SDHCALRPC(G4int _id , const SDHCALRPCGeom& _geom) ;
-		virtual ~SDHCALRPC() = default ;
+		SDHCALRPC(G4int _id , G4int _nPadX , G4int _nPadY, G4double _cellSize , bool old = false) ;
+		virtual ~SDHCALRPC() ;
 
 		G4LogicalVolume* getLogicRPC() { return logicRPC ; }
 		G4VPhysicalVolume* getPhysicRPC() { return physicRPC ; }
@@ -59,62 +32,62 @@ class SDHCALRPC : public G4VSensitiveDetector
 		inline G4double getSizeZ() const { return sizeZ ; }
 		inline G4int getID() const { return id ; }
 
-
 		inline G4bool isTransformComputed() const { return transformComputed ; }
 		void setCoordTransform(G4AffineTransform trans) ;
 		inline const G4AffineTransform& getGlobalToRpcTransform() const { return globalToRpcTransform ; }
+
 
 		const G4ThreeVector globalToRpcCoordTransform(G4ThreeVector globalCoord) const ;
 		const G4ThreeVector rpcToGlobalCoordTransform(G4ThreeVector localCoord) const ;
 
 		const G4ThreeVector IJToLocalCoord(G4int I , G4int J) const ;
-		std::array<int,2> localCoordToIJ(G4ThreeVector localCoord) const ;
+		std::vector<int> localCoordToIJ(G4ThreeVector localCoord) const ;
 
 		G4ThreeVector getGlobalCoord(G4int I , G4int J) const ;
 
-
 		G4VPhysicalVolume* createPhysicalVolume(G4RotationMatrix* rot , G4ThreeVector trans , G4LogicalVolume* motherLogic) ;
 
-		SDHCALRPC(const SDHCALRPC&) = delete ;
-		void operator=(const SDHCALRPC&) = delete ;
-
-
-		virtual void Initialize(G4HCofThisEvent*) ;
-		virtual G4bool ProcessHits(G4Step* step , G4TouchableHistory*) ;
-
-		virtual void EndOfEvent(G4HCofThisEvent*) ;
-
-		virtual G4bool Interested(const G4Step* step) const ;
-
-		void finalizeLastHit() ;
 
 
 	protected :
+		static std::set<SDHCALRPC*> allTheRPC ;
 
-		virtual void build(const SDHCALRPCGeom& _geom) ;
+		SDHCALRPC() { ; } //Just for derived class
 
-		G4int id {} ;
-		G4int nPadX {} ;
-		G4int nPadY {} ;
-		G4double cellSize {} ;
-		G4double sizeX {} ;
-		G4double sizeY {} ;
-		G4double sizeZ {} ;
+		virtual void getMaterials() ;
+		virtual void build() ;
 
-		G4bool transformComputed {} ;
-		G4AffineTransform rpcToGlobalTransform {} ;
-		G4AffineTransform globalToRpcTransform {} ;
+		G4bool oldConfig = false ;
 
-		G4LogicalVolume* logicRPC {} ;
-		G4VPhysicalVolume* physicRPC {} ;
+		G4String name ;
 
-		G4VPhysicalVolume* physiGasGap {} ;
+		G4int id ;
+		G4int nPadX ;
+		G4int nPadY ;
+		G4double cellSize ;
+		G4double sizeX ;
+		G4double sizeY ;
+		G4double sizeZ ;
 
-		SDHCALHitCollection* hitsCollection {} ;
+		G4bool transformComputed ;
+		G4AffineTransform rpcToGlobalTransform ;
+		G4AffineTransform globalToRpcTransform ;
 
-		SDHCALHit* currentHit {} ;
+		G4Material* defaultMaterial ;
+		G4Material* absorberMaterial ;
+		G4Material* maskMaterial ;
+		G4Material* PCBMaterial ;
+		G4Material* mylarMaterial ;
+		G4Material* graphiteMaterial ;
+		G4Material* glassMaterial ;
+		G4Material* gasGapMaterial ;
+
+		G4LogicalVolume* logicRPC ;
+		G4VPhysicalVolume* physicRPC ;
+		SDHCALRPCSensitiveDetector* sensitiveDetector ;
+
+		G4VPhysicalVolume* physiGasGap ;
+
 } ;
-
-
 
 #endif //SDHCALRPC_h

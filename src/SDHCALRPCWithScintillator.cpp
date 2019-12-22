@@ -1,4 +1,4 @@
-#include "SDHCALRPC.h"
+#include "SDHCALRPCWithScintillator.h"
 
 #include <fstream>
 #include <iostream>
@@ -27,11 +27,9 @@
 
 #include "SDHCALRPCSensitiveDetector.h"
 
-std::set<SDHCALRPC*> SDHCALRPC::allTheRPC ;
-
-SDHCALRPC::SDHCALRPC(G4int _id , G4int _nPadX , G4int _nPadY, G4double _cellSize , bool old)
+SDHCALRPCWithScintillator::SDHCALRPCWithScintillator(G4int _id , G4int _nPadX , G4int _nPadY, G4double _cellSize )
+	: SDHCALRPC()
 {
-	oldConfig = old ;
 	id = _id ;
 
 	nPadX = _nPadX ;
@@ -54,37 +52,29 @@ SDHCALRPC::SDHCALRPC(G4int _id , G4int _nPadX , G4int _nPadY, G4double _cellSize
 	sensitiveDetector = nullptr ;
 	physiGasGap = nullptr ;
 
-	SDHCALRPC::getMaterials() ;
-	SDHCALRPC::build() ;
+	SDHCALRPCWithScintillator::getMaterials() ;
+	SDHCALRPCWithScintillator::build() ;
 
 	allTheRPC.insert(this) ;
 }
-SDHCALRPC::~SDHCALRPC()
-{
-	std::set<SDHCALRPC*>::iterator it = allTheRPC.find(this) ;
-	allTheRPC.erase(it) ;
-}
 
-void SDHCALRPC::build()
+
+void SDHCALRPCWithScintillator::build()
 {
 	G4double CassetteAbsorber_Thickness    = 2.500*CLHEP::mm ;
 
-	G4double RPC_ChipPackage_Thickness     = 1.600*CLHEP::mm ;
-	G4double RPC_PCB_Thickness             = 1.200*CLHEP::mm ;
-	G4double RPC_MylarAnode_Thickness      = 0.050*CLHEP::mm ;
-	G4double RPC_MylarCathode_Thickness    = 0.180*CLHEP::mm ;
-	G4double RPC_GraphiteAnode_Thickness   = 0.050*CLHEP::mm ;
-	G4double RPC_GraphiteCathode_Thickness = 0.050*CLHEP::mm ;
+//	G4double RPC_ChipPackage_Thickness     = 1.600*CLHEP::mm ;
+//	G4double RPC_PCB_Thickness             = 1.200*CLHEP::mm ;
+	G4double Scintillator_Thickness        = 3.000*CLHEP::mm ;
+	G4double RPC_Mylar_Thickness           = 0.015*CLHEP::mm ;
+	G4double RPC_Graphite_Thickness        = 0.050*CLHEP::mm ;
 	G4double RPC_ThinGlass                 = 0.700*CLHEP::mm ;
 	G4double RPC_Gap_Thickness             = 1.200*CLHEP::mm ;
 	G4double RPC_ThickGlass                = 1.100*CLHEP::mm ;
 
-	G4double RPC_Thickness = RPC_ChipPackage_Thickness
-							 + RPC_PCB_Thickness
-							 + RPC_MylarAnode_Thickness
-							 + RPC_MylarCathode_Thickness
-							 + RPC_GraphiteAnode_Thickness
-							 + RPC_GraphiteCathode_Thickness
+	G4double RPC_Thickness = Scintillator_Thickness
+							 + 2.0 * RPC_Mylar_Thickness
+							 + 2.0 * RPC_Graphite_Thickness
 							 + RPC_ThinGlass
 							 + RPC_Gap_Thickness
 							 + RPC_ThickGlass ;
@@ -92,50 +82,41 @@ void SDHCALRPC::build()
 	G4double CassetteThickness = RPC_Thickness + 2.0*CassetteAbsorber_Thickness ;
 	sizeZ = CassetteThickness ;
 
+
 	G4double CassetteAbsorberFrontZ    = -CassetteThickness/2         + CassetteAbsorber_Thickness/2 ;
-	G4double RPC_ChipPackageZ          = CassetteAbsorberFrontZ       + CassetteAbsorber_Thickness/2    + RPC_ChipPackage_Thickness/2 ;
-	G4double RPC_PCBPosZ               = RPC_ChipPackageZ             + RPC_ChipPackage_Thickness/2     + RPC_PCB_Thickness/2 ;
-	G4double RPC_MylarAnodePosZ        = RPC_PCBPosZ                  + RPC_PCB_Thickness/2             + RPC_MylarAnode_Thickness/2 ;
-	G4double RPC_GraphiteAnodePosZ     = RPC_MylarAnodePosZ           + RPC_MylarAnode_Thickness/2      + RPC_GraphiteAnode_Thickness/2 ;
-	G4double RPC_ThinGlassPosZ         = RPC_GraphiteAnodePosZ        + RPC_GraphiteAnode_Thickness/2   + RPC_ThinGlass/2 ;
+	G4double RPC_MylarAnodePosZ        = CassetteAbsorberFrontZ       + CassetteAbsorber_Thickness/2    + RPC_Mylar_Thickness/2 ;
+	G4double RPC_GraphiteAnodePosZ     = RPC_MylarAnodePosZ           + RPC_Mylar_Thickness/2           + RPC_Graphite_Thickness/2 ;
+	G4double RPC_ThinGlassPosZ         = RPC_GraphiteAnodePosZ        + RPC_Graphite_Thickness/2        + RPC_ThinGlass/2 ;
 	G4double RPC_GapPosZ               = RPC_ThinGlassPosZ            + RPC_ThinGlass/2                 + RPC_Gap_Thickness/2 ;
 	G4double RPC_ThickGlassPosZ        = RPC_GapPosZ                  + RPC_Gap_Thickness/2             + RPC_ThickGlass/2 ;
-	G4double RPC_GraphiteCathodePosZ   = RPC_ThickGlassPosZ           + RPC_ThickGlass/2                + RPC_GraphiteCathode_Thickness/2 ;
-	G4double RPC_MylarCathodePosZ      = RPC_GraphiteCathodePosZ      + RPC_GraphiteCathode_Thickness/2 + RPC_MylarCathode_Thickness/2 ;
-	G4double CassetteAbsorberBackZ     = RPC_MylarCathodePosZ         + RPC_MylarCathode_Thickness/2    + CassetteAbsorber_Thickness/2 ;
+	G4double RPC_GraphiteCathodePosZ   = RPC_ThickGlassPosZ           + RPC_ThickGlass/2                + RPC_Graphite_Thickness/2 ;
+	G4double RPC_MylarCathodePosZ      = RPC_GraphiteCathodePosZ      + RPC_Graphite_Thickness/2        + RPC_Mylar_Thickness/2 ;
+	G4double ScintillatorPosZ          = RPC_MylarCathodePosZ         + RPC_Mylar_Thickness/2           + Scintillator_Thickness/2 ;
+	G4double CassetteAbsorberBackZ     = ScintillatorPosZ             + Scintillator_Thickness/2        + CassetteAbsorber_Thickness/2 ;
+
 
 	G4Box* solidCassette = new G4Box(name , sizeX/2, sizeY/2, CassetteThickness/2) ;
 	G4LogicalVolume* logicCassette = new G4LogicalVolume(solidCassette ,  defaultMaterial , name ) ;
 
 	//Inside Cassette -------------------------------------------------------
 
-	//Electronics
-	G4Box* solidRPCElectronics = new G4Box("Mask" , sizeX/2 , sizeY/2 , RPC_ChipPackage_Thickness/2) ;
-	G4LogicalVolume* logicRPCElectronics = new G4LogicalVolume(solidRPCElectronics , maskMaterial , "Mask") ;
-	new G4PVPlacement(0 , G4ThreeVector(0,0,RPC_ChipPackageZ) , logicRPCElectronics , "Mask", logicCassette , false , 0 , true) ;
-
-	//PCB
-	G4Box* solidRPCPCB = new G4Box("PCB" ,  sizeX/2 , sizeY/2 , RPC_PCB_Thickness/2) ;
-	G4LogicalVolume* logicRPCPCB = new G4LogicalVolume(solidRPCPCB , PCBMaterial , "PCB") ;
-	new G4PVPlacement(0 , G4ThreeVector(0,0,RPC_PCBPosZ) , logicRPCPCB , "PCB", logicCassette , false , 0 , true) ;
-
 	//mylar anode
-	G4Box* solidRPCmylarAnode = new G4Box("MylarAnode" , sizeX/2 , sizeY/2 , RPC_MylarAnode_Thickness/2) ;
+	G4Box* solidRPCmylarAnode = new G4Box("MylarAnode" , sizeX/2 , sizeY/2 , RPC_Mylar_Thickness/2) ;
 	G4LogicalVolume* logicRPCmylarAnode = new G4LogicalVolume(solidRPCmylarAnode , mylarMaterial , "MylarAnode") ;
 	new G4PVPlacement(0 , G4ThreeVector(0,0,RPC_MylarAnodePosZ) , logicRPCmylarAnode , "MylarAnode" , logicCassette , false , 0 , true) ;
 
 	//mylar cathode
-	G4Box* solidRPCmylarCathode = new G4Box("MylarCathode" , sizeX/2 , sizeY/2 , RPC_MylarCathode_Thickness/2) ;
+	G4Box* solidRPCmylarCathode = new G4Box("MylarCathode" , sizeX/2 , sizeY/2 , RPC_Mylar_Thickness/2) ;
 	G4LogicalVolume* logicRPCmylarCathode = new G4LogicalVolume(solidRPCmylarCathode , mylarMaterial , "MylarCathode") ;
 	new G4PVPlacement(0 , G4ThreeVector(0,0,RPC_MylarCathodePosZ) , logicRPCmylarCathode , "MylarCathode" , logicCassette , false , 0 , true) ;
 
 	//Graphite anode
-	G4Box* solidRPCGraphiteAnode = new G4Box("GraphiteAnode" , sizeX/2 , sizeY/2 , RPC_GraphiteAnode_Thickness/2) ;
+	G4Box* solidRPCGraphiteAnode = new G4Box("GraphiteAnode" , sizeX/2 , sizeY/2 , RPC_Graphite_Thickness/2) ;
 	G4LogicalVolume* logicRPCGraphiteAnode = new G4LogicalVolume(solidRPCGraphiteAnode , graphiteMaterial , "GraphiteAnode") ;
 	new G4PVPlacement(0 , G4ThreeVector(0,0,RPC_GraphiteAnodePosZ) , logicRPCGraphiteAnode , "GraphiteAnode" , logicCassette , false , 0 , true) ;
 
 	//Graphite cathode
-	G4Box* solidRPCGraphiteCathode = new G4Box("GraphiteCathode" , sizeX/2 , sizeY/2 , RPC_GraphiteCathode_Thickness/2) ;
+	G4Box* solidRPCGraphiteCathode = new G4Box("GraphiteCathode" , sizeX/2 , sizeY/2 , RPC_Graphite_Thickness/2) ;
 	G4LogicalVolume* logicRPCGraphiteCathode = new G4LogicalVolume(solidRPCGraphiteCathode ,  graphiteMaterial , "GraphiteCathode") ;
 	new G4PVPlacement(0 , G4ThreeVector(0,0,RPC_GraphiteCathodePosZ) , logicRPCGraphiteCathode , "GraphiteCathode" ,  logicCassette , false , 0 , true) ;
 
@@ -157,6 +138,11 @@ void SDHCALRPC::build()
 	//	G4bool allLocal = true ;
 	//	logicGap->SetFieldManager( fEmFieldSetup->GetLocalFieldManager() , allLocal ) ;
 
+	//scintillator
+	G4Box* solidScintillator = new G4Box("Scintillator" , sizeX/2 , sizeY/2 , Scintillator_Thickness/2) ;
+	G4LogicalVolume* logicScintillator = new G4LogicalVolume(solidScintillator , scintillatorMaterial , "Scintillator") ;
+	new G4PVPlacement(0 , G4ThreeVector(0.,0.,ScintillatorPosZ) , logicScintillator , "Scintillator" , logicCassette , false , 0 , true) ;
+
 
 	//back absorber
 	G4Box* solidBackCassetteAbsorber = new G4Box("BackCassetteAbsorber" , sizeX/2 , sizeY/2 , CassetteAbsorber_Thickness/2) ;
@@ -176,70 +162,13 @@ void SDHCALRPC::build()
 	logicRPC = logicCassette ;
 }
 
-G4VPhysicalVolume* SDHCALRPC::createPhysicalVolume(G4RotationMatrix* rot , G4ThreeVector trans , G4LogicalVolume* motherLogic)
-{
-	physicRPC = new G4PVPlacement(rot , trans , logicRPC , name , motherLogic , false , 0 , true) ;
-	return physicRPC ;
-}
 
-
-void SDHCALRPC::getMaterials()
+void SDHCALRPCWithScintillator::getMaterials()
 {
+	SDHCALRPC::getMaterials() ;
+
 	G4NistManager* man = G4NistManager::Instance() ;
-
-	defaultMaterial =  man->FindOrBuildMaterial("G4_Galactic") ;
-
-	absorberMaterial = G4Material::GetMaterial("SDHCAL_Steel316L" , true) ;
-	maskMaterial = G4Material::GetMaterial("SDHCAL_epoxy" , true) ;
-	PCBMaterial = G4Material::GetMaterial("SDHCAL_g10" , true) ;
-
-	if ( oldConfig ) //to reproduce old results
-	{
-		absorberMaterial = G4Material::GetMaterial("SDHCAL_Steel316L_Old" , true) ;
-		maskMaterial = G4Material::GetMaterial("G4_Galactic" , true) ;
-		PCBMaterial = G4Material::GetMaterial("G4_Galactic" , true) ;
-	}
-
-	mylarMaterial = man->FindOrBuildMaterial("G4_MYLAR") ;
-	graphiteMaterial = man->FindOrBuildMaterial("G4_GRAPHITE") ;
-	glassMaterial = man->FindOrBuildMaterial("G4_Pyrex_Glass") ;
-	gasGapMaterial = G4Material::GetMaterial("SDHCAL_RPCGaz" , true) ;
-}
-
-void SDHCALRPC::setCoordTransform(G4AffineTransform trans)
-{
-	globalToRpcTransform = trans ;
-	rpcToGlobalTransform = globalToRpcTransform.Inverse() ;
-	transformComputed = true ;
-}
-
-const G4ThreeVector SDHCALRPC::globalToRpcCoordTransform(G4ThreeVector globalCoord) const
-{
-	return globalToRpcTransform.TransformPoint(globalCoord) ;
-}
-const G4ThreeVector SDHCALRPC::rpcToGlobalCoordTransform(G4ThreeVector localCoord) const
-{
-	return rpcToGlobalTransform.TransformPoint(localCoord) ;
-}
-std::vector<int> SDHCALRPC::localCoordToIJ(G4ThreeVector localCoord) const
-{
-	localCoord += G4ThreeVector(0.5*sizeX , 0.5*sizeY ,0) ;
-
-	std::vector<int> ij ;
-	ij.push_back( static_cast<G4int>( localCoord.x() / cellSize ) ) ;
-	ij.push_back( static_cast<G4int>( localCoord.y() / cellSize ) ) ;
-
-	return ij ;
-}
-
-const G4ThreeVector SDHCALRPC::IJToLocalCoord(G4int I , G4int J) const
-{
-	return G4ThreeVector( -0.5*sizeX + (I+0.5)*cellSize , -0.5*sizeY + (J+0.5)*cellSize , 0) ;
+	scintillatorMaterial = man->FindOrBuildMaterial("G4_POLYSTYRENE") ;
 }
 
 
-G4ThreeVector SDHCALRPC::getGlobalCoord(G4int I , G4int J) const
-{
-	G4ThreeVector localCoord( -0.5*sizeX + (I+0.5)*cellSize , -0.5*sizeY + (J+0.5)*cellSize , 0) ;
-	return rpcToGlobalTransform.TransformPoint(localCoord) ;
-}
