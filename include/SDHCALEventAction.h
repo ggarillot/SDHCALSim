@@ -9,7 +9,6 @@
 #include "SDHCALTrackingAction.h"
 #include "SDHCALStackingAction.h"
 #include "SDHCALPrimaryGeneratorAction.h"
-#include "SDHCALRPCSensitiveDetector.h"
 #include "SDHCALRootWriter.h"
 
 #include <ctime>
@@ -19,18 +18,21 @@ class SDHCALEventAction : public G4UserEventAction
 {
 	public :
 		SDHCALEventAction(SDHCALRunAction* _runAction) ;
-		virtual ~SDHCALEventAction() ;
+		virtual ~SDHCALEventAction() = default ;
 
 		virtual void BeginOfEventAction(const G4Event* event) ;
 		virtual void EndOfEventAction(const G4Event* event) ;
 
+		SDHCALEventAction(const SDHCALEventAction&) = delete ;
+		void operator=(const SDHCALEventAction&) = delete ;
+
 	private :
 
-		clock_t beginClock ;
-		double averageTime ;
-		unsigned int nEventsProcessed ;
+		clock_t beginClock {} ;
+		double averageTime {} ;
+		unsigned int nEventsProcessed {} ;
 
-		SDHCALRunAction* runAction ;
+		SDHCALRunAction* runAction {} ;
 
 } ;
 

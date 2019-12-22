@@ -1,6 +1,7 @@
 #include "SDHCALEventAction.h"
 
 #include "SDHCALRun.h"
+#include "SDHCALRPC.h"
 
 #include <G4RunManager.hh>
 
@@ -10,11 +11,6 @@ SDHCALEventAction::SDHCALEventAction(SDHCALRunAction* _runAction)
 	runAction = _runAction ;
 	nEventsProcessed = 0 ;
 	averageTime = 0 ;
-}
-
-
-SDHCALEventAction::~SDHCALEventAction()
-{
 }
 
 void SDHCALEventAction::BeginOfEventAction(const G4Event* event)
